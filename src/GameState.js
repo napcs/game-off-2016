@@ -1,5 +1,13 @@
 import box from './utils/box';
+
+import Fixer from './enemies/Fixer';
+import Chaser from './enemies/Chaser';
+
 class GameState extends Phaser.State {
+  preload() {
+    this.load.image('chaser', 'assets/sprites/chaser.png');
+    this.load.image('fixer', 'assets/sprites/fixer.png');
+  }
 
   definePlayer () {
     this.player = this.add.sprite(this.center.x, this.center.y,
@@ -16,17 +24,27 @@ class GameState extends Phaser.State {
   }
 
   defineEnemies () {
-    this.enemies = this.add.group();
-    this.enemies.enableBody = true;
+    this.chasers = this.add.group();
+    this.chasers.enableBody = true;
 
     this.nextEnemyAt = 0;
 
-    this.enemies.createMultiple(50,
-      box(this.game, {length: 32, width: 32, color: '#f00'})
-    );
+    for(let i = 0; i < 10; i++) {
+      this.chasers.add( new Chaser(this.game ));
+    }
 
-    this.enemies.setAll('outOfBoundsKill', true);
-    this.enemies.setAll('checkWorldBounds', true);
+    this.chasers.setAll('outOfBoundsKill', true);
+    this.chasers.setAll('checkWorldBounds', true);
+
+    this.fixers = this.add.group();
+    this.fixers.enableBody = true;
+
+    for(let i = 0; i < 10; i++) {
+      this.fixers.add( new Fixer(this.game ));
+    }
+
+    this.fixers.setAll('outOfBoundsKill', true);
+    this.fixers.setAll('checkWorldBounds', true);
   }
 
   defineKeys() {
@@ -123,10 +141,13 @@ class GameState extends Phaser.State {
   }
 
   playerShootsEnemy(bullet, enemy) {
-    enemy.kill();
+    enemy.health--;
+    if(enemy.health === 0){
+      enemy.kill();
+      this.playerXP += 1; // TODO: get from enemy?
+      this.score.text = this.playerXP;
+    }
     bullet.kill();
-    this.playerXP += 1; // TODO: get from enemy?
-    this.score.text = this.playerXP;
   }
 
   enemyHitsPlayer(player, enemy) {
@@ -136,8 +157,10 @@ class GameState extends Phaser.State {
 
   update() {
     //  Run collision
-    this.game.physics.arcade.overlap(this.weapon.bullets, this.enemies, this.playerShootsEnemy, null, this);
-    this.game.physics.arcade.overlap(this.enemies, this.player, this.enemyHitsPlayer, null, this);
+    this.game.physics.arcade.overlap(this.weapon.bullets, this.chasers, this.playerShootsEnemy, null, this);
+    this.game.physics.arcade.overlap(this.weapon.bullets, this.fixers, this.playerShootsEnemy, null, this);
+    this.game.physics.arcade.overlap(this.chasers, this.player, this.enemyHitsPlayer, null, this);
+    this.game.physics.arcade.overlap(this.fixers, this.player, this.enemyHitsPlayer, null, this);
 
     this.handlePlayerMovement();
     this.handleEnemies();
@@ -158,30 +181,45 @@ class GameState extends Phaser.State {
 
   handleEnemies() {
 
-    if (this.nextEnemyAt < this.time.now && this.enemies.countDead() > 0) {
+    if (this.nextEnemyAt < this.time.now ) {
       this.nextEnemyAt = this.time.now + this.currentLevel.enemyDelay;
-      var enemy = this.enemies.getFirstExists(false);
 
-      // spawn at a random location
-      let enemyX = this.rnd.integerInRange(20, 480)
-      let enemyY = this.rnd.integerInRange(20, 480)
-
-      /* adjust for player */
-
-      let willCollide = Phaser.Rectangle.intersectsRaw(this.player.getBounds(), enemyX, enemyX + enemy.width, enemyY, enemyY + enemy.height, 0);
-
-      if (willCollide) {
-        enemyX + 100;
+      if (this.rnd.integerInRange(1,2) % 2 === 0) {
+        var enemy = this.chasers.getFirstExists(false);
+      } else {
+        var enemy = this.fixers.getFirstExists(false);
       }
 
-      enemy.reset(enemyX, enemyY);
+      // what if there's no enemy?
+      if(enemy) {
+
+        // spawn at a random location
+        let enemyX = this.rnd.integerInRange(20, 480)
+        let enemyY = this.rnd.integerInRange(20, 480)
+
+        /* adjust for player */
+        let willCollide = Phaser.Rectangle.intersectsRaw(this.player.getBounds(), enemyX, enemyX + enemy.width, enemyY, enemyY + enemy.height, 200);
+
+        console.log(willCollide);
+
+        if (willCollide) {
+          if(enemyX < this.player.x) {
+            enemyX-= 100;
+          } else {
+            enemyX+= 100;
+          }
+        }
+
+        enemy.spawn(enemyX, enemyY);
+      }
 
     }
 
-    // hurl enemy at player
-    for(let i = 0, length = this.enemies.length; i < length; i++ ){
-      let enemy = this.enemies.children[i];
+    // hurl chasers at player
+    for(let i = 0, length = this.chasers.length; i < length; i++ ){
+      let enemy = this.chasers.children[i];
       this.physics.arcade.moveToObject(enemy, this.player, this.currentLevel.enemySpeed);
+      enemy.rotation = Math.atan2(this.player.y - enemy.y, this.player.x - enemy.x);
     }
 
   }
