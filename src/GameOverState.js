@@ -1,6 +1,7 @@
 class GameOverState extends Phaser.State {
 
 	create() {
+    this.stage.backgroundColor = '#000';
 		let center = { x: this.game.world.centerX, y: this.game.world.centerY }
 
     let titleStyle = { font: "65px Arial", fill: "#ff0044", align: "center" };
@@ -17,7 +18,7 @@ class GameOverState extends Phaser.State {
   update() {
    if (this.enterKey.isDown) {
 
-      this.state.start('GameState');
+      this.state.start('TitleState');
 
     }
   }

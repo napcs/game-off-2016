@@ -7,12 +7,17 @@ class GameState extends Phaser.State {
   preload() {
     this.load.image('chaser', 'assets/sprites/chaser.png');
     this.load.image('fixer', 'assets/sprites/fixer.png');
+    this.load.image('player', 'assets/sprites/player.png');
+    this.load.image('background', 'assets/sprites/background.png');
+
+    this.load.audio('weapon', 'assets/sounds/weapon.wav');
+    this.load.audio('hit', 'assets/sounds/hit.wav');
+    this.load.audio('kill', 'assets/sounds/kill.wav');
+    this.load.audio('death', 'assets/sounds/death.wav');
   }
 
   definePlayer () {
-    this.player = this.add.sprite(this.center.x, this.center.y,
-      box(this.game, {length: 32, width: 32, color: '#4F616E'})
-    );
+    this.player = this.add.sprite(this.center.x, this.center.y, 'player');
 
     this.player.body.collideWorldBounds = true;
 
@@ -69,6 +74,12 @@ class GameState extends Phaser.State {
     this.weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
     this.weapon.bulletSpeed = 600;
     this.weapon.trackSprite(this.player, 0, 0, true);
+
+    this.weaponSound = this.add.audio('weapon');
+    this.hitSound = this.add.audio('hit');
+    this.killSound = this.add.audio('kill');
+    this.deathSound = this.add.audio('death');
+
   }
 
   // Determines level based on current player XP
@@ -91,7 +102,7 @@ class GameState extends Phaser.State {
   }
 
 	create() {
-
+    this.add.tileSprite(0, 0, 1000, 600, 'background');
     this.stage.backgroundColor = '#BDC2C5';
     this.physics.startSystem(Phaser.Physics.ARCADE);
     this.world.enableBody = true;
@@ -125,6 +136,7 @@ class GameState extends Phaser.State {
 
     if (this.keyboardControls.fire.isDown) {
       this.weapon.fire();
+      this.weaponSound.play();
     }
 
     if (this.cursor.up.isDown || this.keyboardControls.up.isDown ) {
@@ -146,12 +158,18 @@ class GameState extends Phaser.State {
       enemy.kill();
       this.playerXP += 1; // TODO: get from enemy?
       this.score.text = this.playerXP;
+      this.killSound.play();
+    }else{
+      this.hitSound.play();
     }
+
     bullet.kill();
   }
 
   enemyHitsPlayer(player, enemy) {
     player.kill();
+
+    this.deathSound.play();
 		this.state.start('GameOverState');
   }
 
@@ -194,13 +212,12 @@ class GameState extends Phaser.State {
       if(enemy) {
 
         // spawn at a random location
-        let enemyX = this.rnd.integerInRange(20, 480)
-        let enemyY = this.rnd.integerInRange(20, 480)
+        let enemyX = this.rnd.integerInRange(20, this.world.width)
+        let enemyY = this.rnd.integerInRange(20, this.world.height)
 
         /* adjust for player */
         let willCollide = Phaser.Rectangle.intersectsRaw(this.player.getBounds(), enemyX, enemyX + enemy.width, enemyY, enemyY + enemy.height, 200);
 
-        console.log(willCollide);
 
         if (willCollide) {
           if(enemyX < this.player.x) {

@@ -1,6 +1,7 @@
 class TitleState extends Phaser.State {
 
 	create() {
+    this.stage.backgroundColor = '#000';
 		let center = { x: this.game.world.centerX, y: this.game.world.centerY }
 
     let titleStyle = { font: "65px Arial", fill: "#ff0044", align: "center" };
@@ -8,7 +9,7 @@ class TitleState extends Phaser.State {
     let title = this.game.add.text(center.x, center.y, "HACK", titleStyle);
 		title.anchor.set(0.5);
 
-    let subtitle = this.game.add.text(center.x, center.y + 100, "Press Enter to Start", subtitleStyle);
+    let subtitle = this.game.add.text(center.x, center.y + 100, "WASD to move, J and K to rotate, SPACE to shoot\nPress Enter to Start", subtitleStyle);
 		subtitle.anchor.set(0.5);
 
     this.enterKey = this.game.input.keyboard.addKey(Phaser.Keyboard.ENTER);
