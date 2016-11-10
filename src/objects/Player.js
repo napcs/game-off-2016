@@ -40,6 +40,10 @@ class Player extends Phaser.Sprite {
 
   }
 
+  getLevel() {
+    return playerLevel;
+  }
+
   move(keyboardControls, cursor) {
     this.body.velocity.y = 0;
     this.body.velocity.x = 0;

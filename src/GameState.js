@@ -1,4 +1,5 @@
 import Player from './objects/Player';
+import ChaserGroup from './groups/ChaserGroup';
 
 let cursors = {};
 let keyboardControls = {};
@@ -6,10 +7,12 @@ let center = {};
 
 let stage = {};
 let player = {};
-let chasers = {};
+let chaserGroup = {};
+let currentLevel = {};
 let fixers = {};
 let score = 0;
 let scoreLabel = '';
+let nextEnemyAt = 0;
 
 class GameState extends Phaser.State {
 
@@ -54,13 +57,30 @@ class GameState extends Phaser.State {
     player = new Player(this.game).load();
     center = { x: this.game.world.centerX, y: this.game.world.centerY }
 
+    currentLevel = this.calculateLevel();
     const scoreStyle = { font: "16px Arial", fill: "#ff0044", align: "center" };
     scoreLabel = this.add.text(0, 0, "Score: ", scoreStyle);
     score = this.add.text(50, 0, "0", scoreStyle);
+
+    chaserGroup = new ChaserGroup(this.game).load();
   }
 
   update() {
-    player.move(keyboardControls, cursors);    
+    player.move(keyboardControls, cursors);
+    chaserGroup.spawnChasers(currentLevel.enemyDelay, player);  
+  }
+
+  calculateLevel() {
+    let speed = 10 + (player.getLevel() * 10);
+    let delay = 1000 - (player.getLevel() * 10);
+
+    // don't drop below a sensible floor.
+    if (delay < 100) delay = 100;
+
+    return {
+      enemyDelay: delay,
+      enemySpeed: speed
+    }
   }
 
 }
