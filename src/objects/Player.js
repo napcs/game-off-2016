@@ -1,11 +1,15 @@
+import box from '../utils/box';
+
 const SPRITE_SHEET = 'player';
 const INITIAL_SPEED = 250;
 
 let pos_x        = 0;
 let pos_y        = 0;
 let speed        = 0;
+
 let playerLevel  = 1;
 let playerXP     = 0;
+let weapon       = {};
 
 class Player extends Phaser.Sprite {
 
@@ -21,7 +25,23 @@ class Player extends Phaser.Sprite {
     this.anchor.set(0.5);
     speed = INITIAL_SPEED;
 
+    this.defineWeapons();
     return this;
+  }
+
+  defineWeapons() {
+    weapon = this.game.add.weapon(30,
+      box(this.game, {length: 6, width: 6, color: '#f00'})
+    );
+
+    weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
+    weapon.bulletSpeed = 600;
+    weapon.trackSprite(this, 0, 0, true);
+
+    //weaponSound = this.add.audio('weapon');
+    //hitSound = this.add.audio('hit');
+    //killSound = this.add.audio('kill');
+    //deathSound = this.add.audio('death');
   }
 
   move(keyboardControls, cursor) {
@@ -37,7 +57,7 @@ class Player extends Phaser.Sprite {
     }
 
     if (keyboardControls.fire.isDown) {
-      //this.weapon.fire();
+      weapon.fire();
       //this.weaponSound.play();
     }
 
