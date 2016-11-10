@@ -14,6 +14,7 @@ class GameState extends Phaser.State {
     this.load.audio('hit', 'assets/sounds/hit.wav');
     this.load.audio('kill', 'assets/sounds/kill.wav');
     this.load.audio('death', 'assets/sounds/death.wav');
+    this.load.audio('level1', ['assets/music/level1.mp3', 'assets/music/level1.ogg']);
   }
 
   definePlayer () {
@@ -102,6 +103,8 @@ class GameState extends Phaser.State {
   }
 
 	create() {
+    this.music = this.add.audio('level1');
+    this.music.play();
     this.add.tileSprite(0, 0, 1000, 600, 'background');
     this.stage.backgroundColor = '#BDC2C5';
     this.physics.startSystem(Phaser.Physics.ARCADE);
@@ -110,7 +113,8 @@ class GameState extends Phaser.State {
 		this.center = { x: this.world.centerX, y: this.game.world.centerY }
 
     let scoreStyle = { font: "16px Arial", fill: "#ff0044", align: "center" };
-    this.score = this.add.text(0, 0, "0", scoreStyle);
+    this.scoreLabel = this.add.text(0, 0, "Score: ", scoreStyle);
+    this.score = this.add.text(50, 0, "0", scoreStyle);
 
     this.definePlayer();
     this.defineEnemies();
@@ -170,6 +174,8 @@ class GameState extends Phaser.State {
     player.kill();
 
     this.deathSound.play();
+
+    this.music.stop();
 		this.state.start('GameOverState');
   }
 
@@ -188,6 +194,7 @@ class GameState extends Phaser.State {
   }
 
   render() {
+    /*
     this.game.debug.start(20, 20, 'black');
     this.game.debug.line();
     this.game.debug.line('player xp: ' + this.playerXP);
@@ -195,6 +202,7 @@ class GameState extends Phaser.State {
     this.game.debug.line('Enemy speed: ' + this.currentLevel.enemySpeed);
     this.game.debug.line('Enemy delay: ' + this.currentLevel.enemyDelay);
     this.game.debug.stop();
+    */
   }
 
   handleEnemies() {

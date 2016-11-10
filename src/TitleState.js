@@ -1,6 +1,13 @@
 class TitleState extends Phaser.State {
 
+  preload() {
+    this.load.audio('intro', ['assets/music/intro.mp3', 'assets/music/intro.ogg']);
+  }
 	create() {
+
+    this.music = this.add.audio('intro');
+    this.music.loop = true;
+    this.music.play();
     this.stage.backgroundColor = '#000';
 		let center = { x: this.game.world.centerX, y: this.game.world.centerY }
 
@@ -16,10 +23,9 @@ class TitleState extends Phaser.State {
 	}
 
   update() {
-   if (this.enterKey.isDown) {
-
+    if (this.enterKey.isDown) {
+      this.music.stop();
       this.state.start('GameState');
-
     }
   }
 
