@@ -60,14 +60,12 @@ class ChaserGroup extends Phaser.Group {
     }
   }
 
-  chase() {
-    /*
+  chase(player, enemySpeed) {
     for(let i = 0, length = chasers.length; i < length; i++ ){
       let enemy = chasers.children[i];
-      this.game.physics.arcade.moveToObject(enemy, this.game.player, gameState.currentLevel.enemySpeed);
-      enemy.rotation = Math.atan2(this.game.player.y - enemy.y, this.game.player.x - enemy.x);
+      this.game.physics.arcade.moveToObject(enemy, player, enemySpeed);
+      enemy.rotation = Math.atan2(player.y - enemy.y, player.x - enemy.x);
     }  
-    */
   }
 
 }

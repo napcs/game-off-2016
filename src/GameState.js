@@ -67,7 +67,8 @@ class GameState extends Phaser.State {
 
   update() {
     player.move(keyboardControls, cursors);
-    chaserGroup.spawnChasers(currentLevel.enemyDelay, player);  
+    chaserGroup.spawnChasers(currentLevel.enemyDelay, player);
+    chaserGroup.chase(player, currentLevel.enemySpeed);
   }
 
   calculateLevel() {
