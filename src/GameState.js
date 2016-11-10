@@ -1,9 +1,21 @@
-import box from './utils/box';
+import Player from './objects/Player';
+import ChaserGroup from './groups/ChaserGroup';
 
-import Fixer from './enemies/Fixer';
-import Chaser from './enemies/Chaser';
+let cursors = {};
+let keyboardControls = {};
+let center = {};
+
+let stage = {};
+let player = {};
+let chaserGroup = {};
+let currentLevel = {};
+let fixers = {};
+let score = 0;
+let scoreLabel = '';
+let nextEnemyAt = 0;
 
 class GameState extends Phaser.State {
+
   preload() {
     this.load.image('chaser', 'assets/sprites/chaser.png');
     this.load.image('fixer', 'assets/sprites/fixer.png');
@@ -17,46 +29,14 @@ class GameState extends Phaser.State {
     this.load.audio('level1', ['assets/music/level1.mp3', 'assets/music/level1.ogg']);
   }
 
-  definePlayer () {
-    this.player = this.add.sprite(this.center.x, this.center.y, 'player');
-
-    this.player.body.collideWorldBounds = true;
-
-    this.player.anchor.set(0.5);
-    this.player.speed = 250;
-
-    this.playerLevel = 1;
-    this.playerXP = 0;
-  }
-
-  defineEnemies () {
-    this.chasers = this.add.group();
-    this.chasers.enableBody = true;
-
-    this.nextEnemyAt = 0;
-
-    for(let i = 0; i < 10; i++) {
-      this.chasers.add( new Chaser(this.game ));
-    }
-
-    this.chasers.setAll('outOfBoundsKill', true);
-    this.chasers.setAll('checkWorldBounds', true);
-
-    this.fixers = this.add.group();
-    this.fixers.enableBody = true;
-
-    for(let i = 0; i < 10; i++) {
-      this.fixers.add( new Fixer(this.game ));
-    }
-
-    this.fixers.setAll('outOfBoundsKill', true);
-    this.fixers.setAll('checkWorldBounds', true);
-  }
-
-  defineKeys() {
-    this.cursor = this.input.keyboard.createCursorKeys();
-
-    this.keyboardControls = {
+  create() {
+    this.music = this.add.audio('level1');
+    this.music.play();
+    this.add.tileSprite(0, 0, 1000, 600, 'background');
+    this.game.physics.startSystem(Phaser.Physics.ARCADE);
+    
+    cursors = this.input.keyboard.createCursorKeys();
+    keyboardControls = {
       up: this.input.keyboard.addKey(Phaser.Keyboard.W),
       down: this.input.keyboard.addKey(Phaser.Keyboard.S),
       left: this.input.keyboard.addKey(Phaser.Keyboard.A),
@@ -65,28 +45,29 @@ class GameState extends Phaser.State {
       rotateRight: this.input.keyboard.addKey(Phaser.Keyboard.K),
       fire: this.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR)
     };
+
+    this.game.soundEffects = {
+      weaponSound: this.add.audio('weapon'),
+      hitSound: this.add.audio('hit'),
+      killSound: this.add.audio('kill'),
+      deathSound: this.add.audio('death')
+    };
+
+    stage.backgroundColor = '#BDC2C5';
+    player = new Player(this.game).load();
+    center = { x: this.game.world.centerX, y: this.game.world.centerY }
+
+    currentLevel = this.calculateLevel();
+    const scoreStyle = { font: "16px Arial", fill: "#ff0044", align: "center" };
+    scoreLabel = this.add.text(0, 0, "Score: ", scoreStyle);
+    score = this.add.text(50, 0, "0", scoreStyle);
+
+    chaserGroup = new ChaserGroup(this.game).load();
   }
 
-  defineWeapons() {
-    this.weapon = this.add.weapon(30,
-      box(this.game, {length: 6, width: 6, color: '#f00'})
-    );
-
-    this.weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
-    this.weapon.bulletSpeed = 600;
-    this.weapon.trackSprite(this.player, 0, 0, true);
-
-    this.weaponSound = this.add.audio('weapon');
-    this.hitSound = this.add.audio('hit');
-    this.killSound = this.add.audio('kill');
-    this.deathSound = this.add.audio('death');
-
-  }
-
-  // Determines level based on current player XP
   calculateLevel() {
-    let speed = 10 + (this.playerLevel * 10);
-    let delay = 1000 - (this.playerLevel * 10);
+    let speed = 10 + (player.getLevel() * 10);
+    let delay = 1000 - (player.getLevel() * 10);
 
     // don't drop below a sensible floor.
     if (delay < 100) delay = 100;
@@ -97,156 +78,36 @@ class GameState extends Phaser.State {
     }
   }
 
-  levelUpPlayer() {
-    let step = 5;
-    this.playerLevel = Math.floor(Math.log(this.playerXP + 1, step));
-  }
+  enemyHitsPlayer(player, enemy) {
+    player.kill();
 
-	create() {
-    this.music = this.add.audio('level1');
-    this.music.play();
-    this.add.tileSprite(0, 0, 1000, 600, 'background');
-    this.stage.backgroundColor = '#BDC2C5';
-    this.physics.startSystem(Phaser.Physics.ARCADE);
-    this.world.enableBody = true;
+    this.game.soundEffects.deathSound.play();
 
-		this.center = { x: this.world.centerX, y: this.game.world.centerY }
-
-    let scoreStyle = { font: "16px Arial", fill: "#ff0044", align: "center" };
-    this.scoreLabel = this.add.text(0, 0, "Score: ", scoreStyle);
-    this.score = this.add.text(50, 0, "0", scoreStyle);
-
-    this.definePlayer();
-    this.defineEnemies();
-    this.defineKeys();
-    this.defineWeapons();
-
-    // starting level
-    this.currentLevel = this.calculateLevel();
-	}
-
-  handlePlayerMovement() {
-
-    this.player.body.velocity.y = 0;
-    this.player.body.velocity.x = 0;
-
-    if (this.keyboardControls.rotateRight.isDown) {
-      this.player.body.angularVelocity = 100;
-    }else if (this.keyboardControls.rotateLeft.isDown) {
-      this.player.body.angularVelocity = -100;
-    }else{
-      this.player.body.angularVelocity = 0;
-    }
-
-    if (this.keyboardControls.fire.isDown) {
-      this.weapon.fire();
-      this.weaponSound.play();
-    }
-
-    if (this.cursor.up.isDown || this.keyboardControls.up.isDown ) {
-      this.player.body.velocity.y -= this.player.speed;
-    } else if (this.cursor.down.isDown || this.keyboardControls.down.isDown) {
-      this.player.body.velocity.y += this.player.speed;
-    }
-
-    if (this.cursor.left.isDown || this.keyboardControls.left.isDown) {
-      this.player.body.velocity.x -= this.player.speed;
-    } else if (this.cursor.right.isDown || this.keyboardControls.right.isDown) {
-      this.player.body.velocity.x += this.player.speed;
-    }
+    this.music.stop();
+		//this.state.start('GameOverState');
+		console.debug('died');
   }
 
   playerShootsEnemy(bullet, enemy) {
     enemy.health--;
     if(enemy.health === 0){
       enemy.kill();
-      this.playerXP += 1; // TODO: get from enemy?
-      this.score.text = this.playerXP;
-      this.killSound.play();
+      player.addExp(1); // TODO: get from enemy?
+      score.text = player.getExp();
+      this.game.soundEffects.killSound.play();
     }else{
-      this.hitSound.play();
+      this.game.soundEffects.hitSound.play();
     }
 
     bullet.kill();
   }
 
-  enemyHitsPlayer(player, enemy) {
-    player.kill();
-
-    this.deathSound.play();
-
-    this.music.stop();
-		this.state.start('GameOverState');
-  }
-
   update() {
-    //  Run collision
-    this.game.physics.arcade.overlap(this.weapon.bullets, this.chasers, this.playerShootsEnemy, null, this);
-    this.game.physics.arcade.overlap(this.weapon.bullets, this.fixers, this.playerShootsEnemy, null, this);
-    this.game.physics.arcade.overlap(this.chasers, this.player, this.enemyHitsPlayer, null, this);
-    this.game.physics.arcade.overlap(this.fixers, this.player, this.enemyHitsPlayer, null, this);
-
-    this.handlePlayerMovement();
-    this.handleEnemies();
-
-    this.levelUpPlayer();
-    this.currentLevel = this.calculateLevel();
-  }
-
-  render() {
-    /*
-    this.game.debug.start(20, 20, 'black');
-    this.game.debug.line();
-    this.game.debug.line('player xp: ' + this.playerXP);
-    this.game.debug.line('current level: ' + this.playerLevel);
-    this.game.debug.line('Enemy speed: ' + this.currentLevel.enemySpeed);
-    this.game.debug.line('Enemy delay: ' + this.currentLevel.enemyDelay);
-    this.game.debug.stop();
-    */
-  }
-
-  handleEnemies() {
-
-    if (this.nextEnemyAt < this.time.now ) {
-      this.nextEnemyAt = this.time.now + this.currentLevel.enemyDelay;
-
-      if (this.rnd.integerInRange(1,2) % 2 === 0) {
-        var enemy = this.chasers.getFirstExists(false);
-      } else {
-        var enemy = this.fixers.getFirstExists(false);
-      }
-
-      // what if there's no enemy?
-      if(enemy) {
-
-        // spawn at a random location
-        let enemyX = this.rnd.integerInRange(20, this.world.width)
-        let enemyY = this.rnd.integerInRange(20, this.world.height)
-
-        /* adjust for player */
-        let willCollide = Phaser.Rectangle.intersectsRaw(this.player.getBounds(), enemyX, enemyX + enemy.width, enemyY, enemyY + enemy.height, 200);
-
-
-        if (willCollide) {
-          if(enemyX < this.player.x) {
-            enemyX-= 100;
-          } else {
-            enemyX+= 100;
-          }
-        }
-
-        enemy.spawn(enemyX, enemyY);
-      }
-
-    }
-
-    // hurl chasers at player
-    for(let i = 0, length = this.chasers.length; i < length; i++ ){
-      let enemy = this.chasers.children[i];
-      this.physics.arcade.moveToObject(enemy, this.player, this.currentLevel.enemySpeed);
-      enemy.rotation = Math.atan2(this.player.y - enemy.y, this.player.x - enemy.x);
-    }
-
+    player.move(keyboardControls, cursors);
+    this.game.physics.arcade.overlap(chaserGroup.getChasers(), player, this.enemyHitsPlayer, null, this);
+    this.game.physics.arcade.overlap(player.getWeapon().bullets, chaserGroup.getChasers(), this.playerShootsEnemy, null, this);
+    chaserGroup.spawnChasers(currentLevel.enemyDelay, player);
+    chaserGroup.chase(player, currentLevel.enemySpeed);
   }
 
 }
