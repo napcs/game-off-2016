@@ -88,10 +88,24 @@ class GameState extends Phaser.State {
 		console.debug('died');
   }
 
+  playerShootsEnemy(bullet, enemy) {
+    enemy.health--;
+    if(enemy.health === 0){
+      enemy.kill();
+      player.addExp(1); // TODO: get from enemy?
+      score.text = player.getExp();
+      this.game.soundEffects.killSound.play();
+    }else{
+      this.game.soundEffects.hitSound.play();
+    }
+
+    bullet.kill();
+  }
+
   update() {
     player.move(keyboardControls, cursors);
-
     this.game.physics.arcade.overlap(chaserGroup.getChasers(), player, this.enemyHitsPlayer, null, this);
+    this.game.physics.arcade.overlap(player.getWeapon().bullets, chaserGroup.getChasers(), this.playerShootsEnemy, null, this);
     chaserGroup.spawnChasers(currentLevel.enemyDelay, player);
     chaserGroup.chase(player, currentLevel.enemySpeed);
   }

@@ -40,8 +40,20 @@ class Player extends Phaser.Sprite {
 
   }
 
+  addExp(amount) {
+    playerXP += amount;
+  }
+
+  getExp() {
+    return playerXP;
+  }
+
   getLevel() {
     return playerLevel;
+  }
+
+  getWeapon() {
+    return weapon;
   }
 
   move(keyboardControls, cursor) {
