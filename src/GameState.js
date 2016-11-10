@@ -65,12 +65,6 @@ class GameState extends Phaser.State {
     chaserGroup = new ChaserGroup(this.game).load();
   }
 
-  update() {
-    player.move(keyboardControls, cursors);
-    chaserGroup.spawnChasers(currentLevel.enemyDelay, player);
-    chaserGroup.chase(player, currentLevel.enemySpeed);
-  }
-
   calculateLevel() {
     let speed = 10 + (player.getLevel() * 10);
     let delay = 1000 - (player.getLevel() * 10);
@@ -82,6 +76,24 @@ class GameState extends Phaser.State {
       enemyDelay: delay,
       enemySpeed: speed
     }
+  }
+
+  enemyHitsPlayer(player, enemy) {
+    player.kill();
+
+    this.game.soundEffects.deathSound.play();
+
+    this.music.stop();
+		//this.state.start('GameOverState');
+		console.debug('died');
+  }
+
+  update() {
+    player.move(keyboardControls, cursors);
+
+    this.game.physics.arcade.overlap(chaserGroup.getChasers(), player, this.enemyHitsPlayer, null, this);
+    chaserGroup.spawnChasers(currentLevel.enemyDelay, player);
+    chaserGroup.chase(player, currentLevel.enemySpeed);
   }
 
 }
