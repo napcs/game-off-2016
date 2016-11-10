@@ -4,6 +4,7 @@ let cursors = {};
 let keyboardControls = {};
 let center = {};
 
+let stage = {};
 let player = {};
 let chasers = {};
 let fixers = {};
@@ -26,6 +27,9 @@ class GameState extends Phaser.State {
   }
 
   create() {
+    this.music = this.add.audio('level1');
+    this.music.play();
+    this.add.tileSprite(0, 0, 1000, 600, 'background');
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
     
     cursors = this.input.keyboard.createCursorKeys();
@@ -39,9 +43,16 @@ class GameState extends Phaser.State {
       fire: this.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR)
     };
 
-    player = new Player(this.game).load();
+    this.game.soundEffects = {
+      weaponSound: this.add.audio('weapon'),
+      hitSound: this.add.audio('hit'),
+      killSound: this.add.audio('kill'),
+      deathSound: this.add.audio('death')
+    };
 
-		center = { x: this.game.world.centerX, y: this.game.world.centerY }
+    stage.backgroundColor = '#BDC2C5';
+    player = new Player(this.game).load();
+    center = { x: this.game.world.centerX, y: this.game.world.centerY }
 
     const scoreStyle = { font: "16px Arial", fill: "#ff0044", align: "center" };
     scoreLabel = this.add.text(0, 0, "Score: ", scoreStyle);

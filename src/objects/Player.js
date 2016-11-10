@@ -38,10 +38,6 @@ class Player extends Phaser.Sprite {
     weapon.bulletSpeed = 600;
     weapon.trackSprite(this, 0, 0, true);
 
-    //weaponSound = this.add.audio('weapon');
-    //hitSound = this.add.audio('hit');
-    //killSound = this.add.audio('kill');
-    //deathSound = this.add.audio('death');
   }
 
   move(keyboardControls, cursor) {
@@ -58,7 +54,7 @@ class Player extends Phaser.Sprite {
 
     if (keyboardControls.fire.isDown) {
       weapon.fire();
-      //this.weaponSound.play();
+      this.game.soundEffects.weaponSound.play();
     }
 
     if (cursor.up.isDown || keyboardControls.up.isDown ) {
